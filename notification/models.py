@@ -33,8 +33,6 @@ class UserNotification(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         models.CASCADE,
-        blank=True,
-        null=True,
         related_name="user_notifications",
     )
     notification_template = models.ForeignKey(
@@ -45,7 +43,7 @@ class UserNotification(models.Model):
         related_name="user_notifications",
     )
     notification_type = models.IntegerField()
-    status = models.IntegerField()
+    status = models.IntegerField(default=0)
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:

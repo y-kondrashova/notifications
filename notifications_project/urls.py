@@ -21,8 +21,12 @@ from django.urls import path, include
 urlpatterns = [
        path("admin/", admin.site.urls),
        path(
-              "api/translation/",
-              include("translation.urls", namespace="translation")
+              "api/translations/",
+              include("translation.urls", namespace="translations")
+       ),
+       path(
+              "api/notifications/",
+              include("notification.urls", namespace="notifications")
        ),
        path("api/user/", include("user.urls", namespace="user")),
 ]
