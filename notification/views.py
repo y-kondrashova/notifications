@@ -1,25 +1,22 @@
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 
+from main import NotificationService
 from notification import models, serializers
 
 
-class NotificationCategoryListCreateView(generics.ListCreateAPIView):
+class NotificationCategoryViewSet(viewsets.ModelViewSet):
     queryset = models.NotificationCategory.objects.all()
     serializer_class = serializers.NotificationCategorySerializer
-    permission_classes = [IsAuthenticated]
 
 
-class NotificationTemplateListCreateView(generics.ListCreateAPIView):
+class NotificationTemplateViewSet(viewsets.ModelViewSet):
     queryset = models.NotificationTemplate.objects.all()
     serializer_class = serializers.NotificationTemplateSerializer
-    permission_classes = [IsAuthenticated]
 
 
-class UserNotificationListCreateView(generics.ListCreateAPIView):
+class UserNotificationViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.UserNotificationSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -36,28 +33,26 @@ class UserNotificationListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-
-class UserNotificationDetailView(generics.RetrieveAPIView):
-    serializer_class = serializers.UserNotificationSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        queryset = models.UserNotification.objects.filter(user=user)
-        return queryset
-
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
+        service = NotificationService(notification_id=instance.id)
         if instance.status == 0:
             instance.status = 1
             instance.save()
+        notification_text = service.display_notifications()
         serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        data = serializer.data
+        data["notification_text"] = notification_text
+        if notification_text:
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            {"error": "Notification not found or not displayable"},
+            status=status.HTTP_404_NOT_FOUND
+        )
 
 
-class UserNotificationSettingListUpdateView(generics.ListCreateAPIView):
+class UserNotificationSettingViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.UserNotificationSettingSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return models.UserNotificationSetting.objects.filter(
