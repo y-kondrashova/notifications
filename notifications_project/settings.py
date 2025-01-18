@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "translation",
     "user",
     "notification",
+    "project",
 ]
 
 MIDDLEWARE = [

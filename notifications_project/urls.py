@@ -28,5 +28,6 @@ urlpatterns = [
               "api/notifications/",
               include("notification.urls", namespace="notifications")
        ),
+       path("api/projects/", include("project.urls", namespace="projects")),
        path("api/user/", include("user.urls", namespace="user")),
 ]
