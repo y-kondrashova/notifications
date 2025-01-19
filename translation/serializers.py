@@ -13,6 +13,7 @@ class TranslationStringSerializer(serializers.ModelSerializer):
     class Meta:
         model = TranslationString
         fields = "__all__"
+        read_only_fields = ("id", "content_type")
 
     def create(self, validated_data):
         content_type = ContentType.objects.get_for_model(UserNotification)
