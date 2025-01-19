@@ -14,6 +14,8 @@ from notification.models import (
     UserNotificationSetting,
 )
 
+from translation.models import TranslationString
+
 
 class NotificationService:
     def __init__(self, notification_id):
@@ -27,6 +29,12 @@ class NotificationService:
             return notification.user
         except UserNotification.DoesNotExist:
             return None
+
+    def _get_user_language(self):
+        user = self._get_user()
+        if user:
+            return user.language
+        return None
 
 
     def _get_notification_template_text(self):
@@ -64,17 +72,39 @@ class NotificationService:
         except UserNotificationSetting.DoesNotExist:
             return None
 
+    def _get_translation(self):
+        user_language = self._get_user_language()
+        if not user_language:
+            return None
+
+        notification = self._get_notification()
+        if not notification:
+            return None
+
+        try:
+            translation = TranslationString.objects.filter(
+                object_id=notification.notification_template.id,
+                language=user_language
+            ).first()
+            return translation.text if translation else None
+        except TranslationString.DoesNotExist:
+            return None
+
 
     def _generate_notification_text(self):
         try:
             template_text = self._get_notification_template_text()
             if template_text:
+                translated_template = self._get_translation()
+
+                template_to_use = translated_template if translated_template else template_text
+
                 options = [""] + list(self._get_notification_options().values())
-                if options:
-                    return template_text.format(*options)
+                return template_to_use.format(*options)
+
             return None
-        except UserNotification.DoesNotExist:
-            return None
+        except Exception as e:
+            return f"Error generating notification text: {str(e)}"
 
     def _should_show_notification(self, user):
         """
@@ -112,10 +142,3 @@ class NotificationService:
             return self._generate_notification_text()
         else:
             return None
-
-
-if __name__ == "__main__":
-    service = NotificationService(
-        notification_id=4,
-    )
-    print(service.display_notifications())
