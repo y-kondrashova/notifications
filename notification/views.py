@@ -1,3 +1,4 @@
+from django_filters import rest_framework as filters
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
@@ -15,20 +16,19 @@ class NotificationTemplateViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.NotificationTemplateSerializer
 
 
+class UserNotificationFilter(filters.FilterSet):
+    class Meta:
+        model = models.UserNotification
+        fields = ["status", "notification_type"]
+
 class UserNotificationViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.UserNotificationSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = UserNotificationFilter
 
     def get_queryset(self):
         user = self.request.user
-        status = self.request.query_params.get("status")
-        notification_type = self.request.query_params.get("notification_type")
-        queryset = models.UserNotification.objects.filter(user=user)
-        if status is not None:
-            queryset = queryset.filter(status=status)
-        if notification_type is not None:
-            queryset = queryset.filter(notification_type=notification_type)
-
-        return queryset
+        return models.UserNotification.objects.filter(user=user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
